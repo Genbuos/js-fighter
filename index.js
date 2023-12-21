@@ -37,10 +37,10 @@ const player = new Fighter({
 
   imageSrc: './Assets/arleigh/Idle.png',
   framesMax: 8,
-  scale: 3.25,
+  scale: 2.75,
   offset: {
     x: 120,
-    y: 165
+    y: 118
   },
   sprites : {
     idle: {
@@ -67,13 +67,20 @@ const player = new Fighter({
       imageSrc: './Assets/arleigh/Attack2.png',
       framesMax: 5
     },
-
+    takeHit:{
+      imageSrc:'./Assets/arleigh/Take hit.png',
+      framesMax: 3
+    },
+    death: {
+      imageSrc:'./Assets/arleigh/Death.png',
+      framesMax: 8
+    }
   }
 });
 
 const enemy = new Fighter({
   position: {
-    x: 600,
+    x: 800,
     y:0,
   },
   velocity: {
@@ -81,48 +88,55 @@ const enemy = new Fighter({
     y: 10,
   },
   offset: {
-    x: +50,
-    y: 0,
+    x: 100,
+    y: 118,
   },
   color: "blue",
 
 
   imageSrc: './Assets/merlin/Idle.png',
-  framesMax: 6,
-  scale: 2,
+  framesMax: 4,
+  scale: 2.20,
   offset: {
-    x: 120,
+    x: -50,
     y: 133
   },
   sprites : {
     idle: {
       imageSrc: './Assets/merlin/Idle.png',
-      framesMax: 6
+      framesMax: 4
     },
     run: {
       imageSrc: './Assets/merlin/Run.png',
       framesMax: 8
     },
-    //TODO
+
     jump: {
-      imageSrc: './Assets/arleigh/Jump.png',
+      imageSrc: './Assets/merlin/Jump.png',
       framesMax: 2
     },
-    //TODO
+
     fall: {
-      imageSrc: './Assets/arleigh/Fall.png',
+      imageSrc: './Assets/merlin/Fall.png',
       framesMax: 2
     },
     attack1: {
       imageSrc: './Assets/merlin/Attack1.png',
-      framesMax: 8
-    },
-    //TODO
-    attack2: {
-      imageSrc: './Assets/arleigh/Attack2.png',
-      framesMax: 5
+      framesMax: 4
     },
 
+    attack2: {
+      imageSrc: './Assets/merlin/Attack2.png',
+      framesMax: 4
+    },
+    takeHit:{
+      imageSrc:'./Assets/merlin/Take Hit.png',
+      framesMax: 3
+    },
+    death: {
+      imageSrc:'./Assets/merlin/Death.png',
+      framesMax: 7
+    }
   }
 });
 
@@ -196,6 +210,12 @@ function animate() {
     enemy.switchSprite('idle')
   }
 
+  if(enemy.velocity.y < 0 ){
+    enemy.switchSprite('jump')
+  }else if(enemy.velocity.y > 0){
+    enemy.switchSprite('fall')
+  }
+
   //collision detection algo
 
   //grab the right side of the attack box and check
@@ -207,11 +227,14 @@ function animate() {
     }) &&
     player.isAttacking
   ) {
+    enemy.takeHit()
     player.isAttacking = false;
-    enemy.health -= 20
+
     document.querySelector("#enemyHealth").style.width = enemy.health + '%';
   }
 
+
+  //player gets hit
   if (
     collision({
       rectangle1: enemy,
@@ -219,13 +242,14 @@ function animate() {
     }) &&
     enemy.isAttacking
   ) {
+    player.takeHit()
     enemy.isAttacking = false;
-    player.health -= 20
+    player.health -= 5
     document.querySelector("#playerHealth").style.width = player.health + '%';
   }
 
   //end game for health
-  if(enemy.health<=0 || player.health <=0){
+  if(enemy.dead || player.dead){
     decideWinner({player, enemy, timerId});
   }
 
@@ -236,6 +260,9 @@ animate();
 
 //Moving characters
 window.addEventListener("keydown", (event) => {
+  if(!player.dead){
+
+
   switch (event.key) {
     case "d":
       keys.d.pressed = true;
@@ -256,6 +283,14 @@ window.addEventListener("keydown", (event) => {
         player.attack2();
         break;
 
+
+  }
+}
+
+if( !enemy.dead ){
+
+
+  switch(event.key){
     case "ArrowRight":
       keys.ArrowRight.pressed = true;
       enemy.lastkey = "ArrowRight";
@@ -272,7 +307,13 @@ window.addEventListener("keydown", (event) => {
       enemy.isAttacking = true;
       enemy.attack()
       break;
+    case "0":
+      enemy.isAttacking = true;
+      enemy.attack2();
+      break;
+
   }
+}
 });
 
 window.addEventListener("keyup", (event) => {
